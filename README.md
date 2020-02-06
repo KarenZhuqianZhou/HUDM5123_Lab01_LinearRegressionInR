@@ -1,5 +1,4 @@
 # Lab 01: Linear Regression in R
-Class projects for HUDM5123: Linear Models &amp; Experimental Design
 
 **Dataset**: *mtcars* in base R
 

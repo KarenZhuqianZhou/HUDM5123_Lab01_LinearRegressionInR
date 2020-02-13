@@ -1,0 +1,154 @@
+---
+title: "HUDM5123_Lab01_LinearRegressionInR"
+author: "Zhuqian Karen Zhou"
+date: "February 6, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1: Examine Data
+```{r}
+dim(mtcars)
+names(mtcars)
+```
+According to the functions applied above, there are 32 rows and 11 columns in the dataset. The 11 variables are 1) mpq (Mile/US gallon), 2) cyl (Number of cylinders), 3) disp (Displacement (cu.in.)), 4) hp (Gross horsepower), 5) drat (Rear axle ratio), 6) wt (Weight (1000 lbs)), 7) qsec (1/4 mile time), 8) vs (Engine: 0=V-shaped,1=straight), 9) am (Transmission: 0=automatic, 1=manual), 10) gear (Number of forward gears), and 11) carb (Number of carburetors).
+
+```{r}
+head(mtcars)
+tail(mtcars)
+```
+The performance and other indices of the first six brands (i.e. Mazda RX4, Mazda RX4 Wag, Datsun 710, Hornet 4 Drive, Hornet Sportabout, and Valinant) and the last six brands (i.e. Porsche 914-2, Lotus Europa, Ford Pantera L, Ferrari Dino, Maserati Bora, and Volvo 142E) in the dataset are shown above.
+
+```{r}
+str(mtcars)
+```
+According to the structure of the dataset presented above, all variables are numeric.
+
+```{r}
+round(var(mtcars), digits = 3)
+round(cor(mtcars), digits = 3)
+```
+The variance/covariance matrix and the correlation matrix are also displayed above. 
+
+```{r}
+plot(mtcars)
+```
+We can see bivariate scatterplots of all combinations of two variables above.
+
+At a glance, there seems to be *positive* linear relationships 1) between number of cylinders and displacement, 2) between displacement and gross hoursepower, 3) between miles per gallon and 1/4 mile time, 4) between displacement and weight, 5) between hoursepower and weight, and 6) between hoursepower and number of carburetors.
+
+Also, there seems to be *negative* linear relationships 1) between miles per gallon and numbers of cylinders, 2) between miles per gallon and displacement, 3) between miles per gallon and gross hoursepower, 4) between miles per gallon and weight, 5) between number of cylinders and number of rear axle ratio, 6) between displacement and rear axle ratio, 7) between gross hoursepower and 1/4 mile time, and 8) between rear axle ratio and weight.
+
+# Task 2: Create a new variable *am_f*
+```{r}
+df <- mtcars
+df$am_f <- factor(x=df$am, levels = c(0,1), labels = c("automatic", "manual"))
+df[,c(9,12)] # print out am and am_f
+```
+
+# Task 3: Graphical Exploration
+```{r}
+hist(df$wt, breaks = 20, xlab = c("Weight (1000 lbs)"), ylab = c("Frequency"), main = c("Histogram of 32 Automobiles' Weight"))
+```
+
+```{r}
+plot(density(df$wt), xlab = c("Weight (1000 lbs)"), ylab = c("Density"), main = c("Kenel Density Plot of 32 Automobiles' Weight"))
+```
+
+```{r}
+plot(x = df$hp, y = df$mpg, xlab = c("Gross Horsepower"), ylab = c("Miles/US Gallon"), main = c("Scatterplot of Automobiles' Gross Horsepower and Miles per US Gallon"))
+```
+
+# Task 4: Simple Linear Regression (1 IV)
+```{r}
+lm1 <- lm(formula = mpg ~ hp, data = df)
+summary(lm1)
+
+#Plot the Regression Line
+plot(x = df$hp, y = df$mpg, xlab = c("Gross Horsepower"), ylab = c("Miles/US Gallon"), main = c("Scatterplot of Automobiles' Gross Horsepower and Miles per US Gallon"))
+abline(a = 30.09886,
+       b = -0.06823, 
+       lwd = 2,
+       col = "blue")
+```
+The estimated intercept, 30.09886, means that when an automobile's gross horsepower approaches zero, the milage that this automobile can run per US gallon is estimated to be around 30. However, it is not genuinely meaningful since a car can hardly has zero horsepower.
+
+The estimated slope, -0.06823, means that in average, when gross horsepower of one automobile is one unit more than the other automobile, the distance it can run per US gallon tends to be around 0.068 miles less than the other one.
+
+The R-square, 0.6024, means that the linear model, mpg=30.09886-0.06823*hp, can explain around 60.24% of the related variability between miles per US gallon and gross horsepower of the 32 automobiles in the dataset.
+
+# Task 5: Multiple Linear Regression (2 IVs)
+```{r}
+lm2 <- lm(formula = mpg ~ hp + wt, data = df)
+summary(lm2)
+
+#Plot the 3D scatterplot
+library(rgl)
+open3d()
+plot3d(df[,c("mpg", "hp", "wt")], col = "red", size = 2)
+
+# Plot the regression plane
+planes3d(a=-1, b=coef(lm2)[2], c=coef(lm2)[3], 
+         d=coef(lm2)[1], alpha=.5, col = "pink")
+```
+The estimated intercept, 37.22727, means that when both an automobile's gross horsepower and its weight approaches zero, the milage that this automobile can run per US gallon is estimated to be around 37.2. However, it is not genuinely meaningful since a car can hardly weigh zero and has zero horsepower.
+
+The estimated slope of hp, -0.03177, means that holding the weight of cars constant, when gross horsepower of one automobile is one unit more than the other automobile, the distance it can run per US gallon tends to be around 0.032 miles less than the other one.
+
+The estimated slope of wt, -3.87783, means that holding the gross horsepower of cars constant, when the weight of one automobile is one lbs more than the other automobile, the distance it can run per US gallon tends to be around 3.878 miles less than the other one.
+
+The R-square, 0.8268, means that the linear model, mpg=37.22727-0.03177*hp-3.87783wt, can explain around 82.68% of the related variability among miles per US gallon, gross horsepower, and weight of the 32 automobiles in the dataset.
+
+# Task 6: Linear Regression with a factor variable
+```{r}
+lm3 <- lm(formula = mpg ~ am_f, data = df)
+summary(lm3)
+
+boxplot(df$mpg, df$am_f, xlab = c("Types of Transmission, Left: Manual, Right: Automatic"), ylab=c("Miles per US Gallon"), main = c("Boxplot of Miles per Gallon and Types of Transmission"))
+
+# Density plots
+library(sm)
+sm.density.compare(df$mpg, df$am_f, xlab="Miles Per Gallon")
+title(main="Distribution of Miles per US Gallon by Types of Transmission")
+legend(x = "topright", 
+       col = c("red", "green"),
+       lty=c("solid", "dashed"),
+       legend = c("automatic", "manual"),
+       lwd = 2,
+       cex = 0.75)
+```
+The estimated intercept, 17.147, means that the average distance that automatic transmissions can run per US gallon is around 17.147 miles.
+
+The estimated slope, 7.245, means that the average distance that manual transmissions can run is around 7.245 miles more than that of automatic transmissions.
+
+The R-square, 0.3598, means that the linear model, mpg=17.147+7.245*am, can explain around 35.98% of the related variability between miles per US gallon and types of transmission of the 32 automobiles in the dataset.
+
+# Task 7: Multiple Linear Regression with interaction
+```{r}
+lm4<-lm(formula = mpg ~ hp*am_f, data = df)
+summary(lm4)
+plot(x = df$hp, 
+     y = df$mpg,
+     col = df$am + 1,
+     pch = 19,
+     xlab = "Gross Horsepower",
+     ylab = "Miles per US Gallon")
+legend(x = "topright",
+       pch = 19, col = 1:2,
+       legend = c("automaric", "manual"))
+abline(a = 26.6248479, b = -0.0591370, 
+       col = 1, lwd = 2)
+abline(a = (26.6248479 + 5.2176534), 
+       b = (-0.0591370 + 0.0004029), 
+       col = 2, lwd = 2)
+```
+The estimated intercepts of the regression line of miles per US gallon on gross horsepower for automatic transmissions, 26.6248479, is smaller than that for manual transmissions, 26.6248479 + 5.2176534.
+
+The estimated slope of the regression line of miles per US gallon on gross horsepower for automatic transmissions, -0.0591370, is slightly smaller than that for manual transmissions, -0.0591370 + 0.0004029, and both are negative.
+
+The estimated intercepts and slopes indicate that for automatic transmissions the higher the gross horsepower the lower the milage per gallan a car can run, which is also true for the manual transmissions, but they have overall higher milage per gallon compared to automatic transmissions.
+
+The R-square, 0.782, means that the linear model, mpg=26.62-0.059hp when cars are automatic transmissions & mpg=31.84-0.059hp when cars are manual transmissions, can explain around 78.2% of the related variability among miles per US gallon, gross horsepower, and types of transmission of the 32 automobiles in the dataset.
